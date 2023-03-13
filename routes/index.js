@@ -12,6 +12,8 @@ const Vonage = require('@vonage/server-sdk')
 const nonContract = require('../models/noncontract')
 var xlsx = require('xlsx')
 var multer = require('multer')
+var moment = require('moment')
+var nodemailer = require('nodemailer');
 const fs = require('fs')
 var path = require('path');
 var Receive = require('../models/receive')
@@ -22,6 +24,7 @@ const accountSid = 'ACacb1e653e4ada35eb9ba8292ae270059';
 const authToken = '1aa69aedddd9dca569561258f790e055'; 
 const client = require('twilio')(accountSid, authToken);
 const alphanumeric_id = "Golden Foods"; 
+var bcrypt = require('bcrypt-nodejs');
 
 
 var storage = multer.diskStorage({
@@ -110,6 +113,183 @@ router.get('/fix',isLoggedIn,function(req,res){
  })
 
 
+
+
+//add teachers
+
+
+router.get('/addUser',function(req,res){
+ var pro = req.user
+
+
+
+
+
+res.render('admit',)
+})
+
+router.post('/addUser', function(req,res){
+ var m = moment()
+                 var year = m.format('YYYY')
+                 var name = req.body.name
+                 var surname = req.body.surname
+                 var fullname = name+" "+surname
+                 var email = req.body.email
+                 var region = 'MashWest'
+                 var mobile = req.body.mobile
+                 var password = req.body.password
+                 var pro = req.user
+               
+               req.check('name','Enter Name').notEmpty();
+               req.check('surname','Enter Surname').notEmpty();
+    
+               req.check('email','Enter email').notEmpty().isEmail();
+   
+               req.check('mobile', 'Enter Phone Number').notEmpty();
+               req.check('password', 'Password do not match').isLength({min: 4}).equals(req.body.confirmPassword);
+                   
+               
+                     
+                  
+               var errors = req.validationErrors();
+                   if (errors) {
+                   
+                   
+                     req.session.errors = errors;
+                     req.session.success = false;
+                     res.render('admit',{ errors:req.session.errors,})
+                    
+                   
+                 }
+                 else
+               
+                {
+                   User.findOne({'email':email, })
+                   .then(user =>{
+                       if(user){ 
+                     // req.session.errors = errors
+                     
+                      req.session.message = {
+                        type:'errors',
+                        message:'email already in use'
+                      }     
+                      
+                         res.render('admit', {
+                             message:req.session.message,  }) 
+                         
+                       
+                 }
+                 
+                               else  {   
+              
+
+                 
+                 var user = new User();
+                 user.name = name
+                 user.surname = surname
+                 user.role = 'Field Officer'
+                 user.mobile = mobile
+                 user.center = 'null'
+                 user.growerNumber = 'null'
+                 user.nonNumber = 100
+                 user.nonGrowerNumber = 'null'
+                 user.lotNumber=1
+                 user.fullname = fullname
+                 user.prefix = 'MC'
+                 user.region = 'MashWest'
+                 user.email = email
+                 user.password = user.encryptPassword(password)
+
+
+                 
+                  
+             
+                  
+         
+                 user.save()
+                   .then(user =>{
+                     const CLIENT_URL = 'http://' + req.headers.host;
+     
+                     const output = `
+                     <h2>Please click on below link to activate your account</h2>
+                     <a href="${CLIENT_URL}/">click here to login</a>
+                     <h1> User credentials</h1>
+                     <p>userID:${email}</p>
+                     <p>password:${password}</p>
+                     <p><b>NOTE: </b> The above activation link expires in 1 week.</p>
+                     `;
+               
+                    
+                     const transporter = nodemailer.createTransport({
+                       service: 'gmail',
+                       auth: {
+                           user: "cashreq00@gmail.com",
+                           pass: "itzgkkqtmchvciik",
+                       },
+                     });
+                     
+               
+                     // send mail with defined transport object
+                     const mailOptions = {
+                         from: '"Admin" <cashreq00@gmail.com>', // sender address
+                         to: email, // list of receivers
+                         subject: "Account Verification ✔", // Subject line
+                         html: output, // html body
+                     };
+               
+                   transporter.sendMail(mailOptions, (error, info) => {
+                         if (error) {
+                           console.log(error)
+                          
+                      req.session.message = {
+                        type:'errors',
+                        message:'confirmation emails not sent'
+                      }
+                      
+                      res.render('imports/teacher', {message:req.session.message,pro:pro}) 
+                  
+                   
+                         }
+                         else {
+                             console.log('Mail sent : %s', info.response);
+                             idNumber++
+                          
+                        
+         
+                             req.session.message = {
+                               type:'success',
+                               message:'confirmation emails sent'
+                             }     
+                             
+                             res.render('imports/teacher', {message:req.session.message,pro:pro}) 
+                           
+                         }
+                     
+                
+                   
+                     
+                     
+                     res.redirect('/addUser')
+                    
+                  
+                 })
+
+               })
+               }
+
+                   })
+                 }
+             
+                
+               
+                   
+                   
+               
+                
+                 
+
+                 
+})
 
 router.get('/txt77',isLoggedIn,function(req,res){
 res.render('text9')
@@ -1187,7 +1367,22 @@ res.redirect('/buyNoncontract')
    
       
       
-
+                             
+      //search growers
+      router.get('/growers',isLoggedIn,(req, res) => {
+ 
+        Grower.find({},(err, docs) => {
+             if (!err) {
+                 res.render("growX", {
+                     list: docs, 
+                     
+                 });
+             }
+             else {
+                 console.log('Error in retrieving  list :' + err);
+             }
+         });
+         });   
 
 
 
@@ -1531,7 +1726,7 @@ router.get('/autocomplete6/',isLoggedIn, function(req, res, next) {
 var name, growerNumber, surname,id,batch,bales, total, mobile;
 var regex= new RegExp(req.query["term"],'i');
 
-var centerFilter =Center.find({centr:regex},{'center':1}).sort({"updated_at":-1}).sort({"created_at":-1}).limit(20);
+var centerFilter =Center.find({centEr:regex},{'center':1}).sort({"updated_at":-1}).sort({"created_at":-1}).limit(20);
 
   
   centerFilter.exec(function(err,data){
@@ -2608,16 +2803,7 @@ res.render('offlineNonContract/uploadNonContract')
                                     
                                     
 
-
-
-
-
-
-          
-
-
-                                
-                                  
+                         
 
 
   
@@ -2639,6 +2825,768 @@ Grower2.find({},(err, docs) => {
 
 
 
+router.get('/importX',isLoggedIn,function(req,res){
+  var pro = req.user
+  res.render('imports',{pro:pro})
+})
+
+
+
+   
+  router.post('/importX',isLoggedIn, upload.single('file'),function(req,res){
+
+    var m = moment()
+    var year = m.format('YYYY')
+
+  
+    
+  /*  if(!req.file){
+        req.session.message = {
+          type:'errors',
+          message:'Select File!'
+        }     
+          res.render('imports/students', {message:req.session.message,pro:pro}) */
+          if (!req.file || req.file.mimetype !== 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'){
+            req.session.message = {
+                type:'errors',
+                message:'Upload Excel File'
+              }     
+                res.render('imports', {message:req.session.message,pro:pro
+                     
+                 }) 
+  
+  
+  
+        }
+          
+        else{
+
+        
+            const file = req.file.filename;
+    
+            
+                 var wb =  xlsx.readFile('./public/uploads/' + file)
+         
+                 var sheets = wb.Sheets;
+                 var sheetNames = wb.SheetNames;
+     
+                 var sheetName = wb.SheetNames[0];
+     var sheet = wb.Sheets[sheetName ];
+     
+        for (var i = 0; i < wb.SheetNames.length; ++i) {
+         var sheet = wb.Sheets[wb.SheetNames[i]];
+     
+         console.log(wb.SheetNames.length)
+         var data =xlsx.utils.sheet_to_json(sheet)
+             
+         var newData = data.map(async function (record){
+     
+        
+         
+      
+          
+          try{
+        
+       
+      
+            let growerNumber = record.growerNumber;
+            let name = record.name;
+            let surname = record.surname;
+            let fullname = name +" "+surname
+            let farm = record.farm;
+            let address = record.address
+            let mobile = record.mobile;
+            let buyingCenter = record.buyingCenter;
+            let buyingRegion = record.buyingRegion;
+          let lotNumber = record.lotNumber
+          let total = record.total
+           let batch = record.batch
+           let proceeds = record.proceeds
+            let bales = record.bales;
+            let type = record.type
+            let sales = record.sales
+            let fieldOfficer = record.fieldOfficer
+            let num = record.num
+        req.body.growerNumber=record.growerNumber
+        req.body.name=record.name
+        req.body.surname=record.surname
+        req.body.address=record.address
+        req.body.mobile=record.mobile
+        req.body.farm=record.farm
+        req.body.address=record.address
+        req.body.buyingCenter=record.buyingCenter
+        req.body.buyingRegion=record.buyingRegion
+        req.body.lotNumber=record.lotNumber
+      
+
+
+req.check('growerNumber','Enter Grower Number').notEmpty();
+
+    
+
+var errors = req.validationErrors();
+  
+if (errors) {
+  
+  req.session.errors = errors;
+  req.session.success = false;
+  for(let x=0;x<req.session.errors.length;x++){
+    throw new SyntaxError(req.session.errors[x].msg +" "+"on line"+" "+ num)
+  }
+
+}
+
+
+        
+             /* 
+         
+            const token = jwt.sign({uid,name,surname,address,mobile,gender,fullname,prefix, dob, photo,dept, term, year,companyId, email,role, password,expdate,expStr }, JWT_KEY, { expiresIn: '100000m' });
+            const CLIENT_URL = 'http://' + req.headers.host;
+      
+            const output = `
+            <h2>Please click on below link to activate your account</h2>
+            <a href="${CLIENT_URL}/records/activate/${token}">click here</a>
+            <h1> User credentials</h1>
+            <p>userID:${uid}</p>
+            <p>password:${password}</p>
+            <p><b>NOTE: </b> The above activation link expires in 1 week.</p>
+            `;
+      
+            const transporter = nodemailer.createTransport({
+              service: 'gmail',
+              auth: {
+                  user: "cashreq00@gmail.com",
+                  pass: "itzgkkqtmchvciik",
+              },
+            });
+            
+      
+            // send mail with defined transport object
+            const mailOptions = {
+                from: '"Admin" <cashreq00@gmail.com>', // sender address
+                to: record.email, // list of receivers
+                subject: "Account Verification ✔", // Subject line
+                html: output, // html body
+            };
+      
+         await   transporter.sendMail(mailOptions, (error, info) => {
+                if (error) {
+                  console.log(error)
+                 
+             req.session.message = {
+               type:'errors',
+               message:'confirmation emails not sent'
+             }
+             
+             res.render('imports/teacher', {message:req.session.message,pro:pro}) 
+         
+          
+                }
+                else {
+                    console.log('Mail sent : %s', info.response);
+                    idNumber++
+                 
+                    User.findByIdAndUpdate(id,{$set:{idNumber:idNumber}},function(err,locs){
+
+                    req.session.message = {
+                      type:'success',
+                      message:'confirmation emails sent'
+                    }     
+                    
+                    res.render('imports/teacher', {message:req.session.message,pro:pro}) 
+                  })
+                }
+            })
+              */
+
+
+
+            {
+              User.findOne({'growerNumber':growerNumber})
+              .then(user =>{
+                  if(user){ 
+                // req.session.errors = errors
+                  //req.success.user = false;
+            
+            
+            
+                 req.session.message = {
+                   type:'errors',
+                   message:'user id already in use'
+                 }     
+                 
+                    res.render('imports', {
+                         message:req.session.message ,pro:pro
+                    }) 
+                
+            }
+            else
+
+
+
+
+
+            var grow = new Grower();
+            grow.growerNumber = growerNumber;
+            grow.name = name;
+            grow.fullname = fullname;
+          grow.surname = surname;
+            grow.farm = farm;
+            grow.address = address;
+            grow.buyingCenter = buyingCenter;
+            grow.buyingRegion = buyingRegion
+            grow.lotNumber = lotNumber;
+            grow.total = total;
+            grow.mobile = mobile;
+            grow.batch = batch;
+            grow.proceeds = proceeds;
+            grow.bales = bales;
+            grow.type = type;
+            grow.sales = sales;
+            grow.fieldOfficer = fieldOfficer
+              
+           
+            grow.save()
+              .then(grow =>{
+               
+              
+                  
+                req.session.message = {
+                  type:'success',
+                  message:'Account Registered'
+                }  
+                res.render('imports',{message:req.session.message});
+              })
+
+            })
+          }
+                   
+                    // .catch(err => console.log(err))
+                  }
+                  catch(e){
+                    res.send(e.message)
+                   }
+                    })
+                  
+                  
+         
+                  }
+                  
+                  
+                    
+                    
+        
+                   
+        
+                    
+             
+                }
+      
+        
+  
+  })
+  
+
+
+
+
+
+
+
+
+
+
+
+  
+router.get('/importC',isLoggedIn,function(req,res){
+  var pro = req.user
+  res.render('importCenter',{pro:pro})
+})
+
+
+
+   
+  router.post('/importC',isLoggedIn, upload.single('file'),function(req,res){
+
+    var m = moment()
+    var year = m.format('YYYY')
+
+  
+    
+  /*  if(!req.file){
+        req.session.message = {
+          type:'errors',
+          message:'Select File!'
+        }     
+          res.render('imports/students', {message:req.session.message,pro:pro}) */
+          if (!req.file || req.file.mimetype !== 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'){
+            req.session.message = {
+                type:'errors',
+                message:'Upload Excel File'
+              }     
+                res.render('importCenter', {message:req.session.message,pro:pro
+                     
+                 }) 
+  
+  
+  
+        }
+          
+        else{
+
+        
+            const file = req.file.filename;
+    
+            
+                 var wb =  xlsx.readFile('./public/uploads/' + file)
+         
+                 var sheets = wb.Sheets;
+                 var sheetNames = wb.SheetNames;
+     
+                 var sheetName = wb.SheetNames[0];
+     var sheet = wb.Sheets[sheetName ];
+     
+        for (var i = 0; i < wb.SheetNames.length; ++i) {
+         var sheet = wb.Sheets[wb.SheetNames[i]];
+     
+         console.log(wb.SheetNames.length)
+         var data =xlsx.utils.sheet_to_json(sheet)
+             
+         var newData = data.map(async function (record){
+     
+        
+         
+      
+          
+          try{
+        
+       
+      
+            let center = record.center;
+            let region = record.region;
+            let totalQty = record.totalQty;
+            let totalMass = record.totalMass
+            let totalAmountSpent = record.totalAmountSpent
+            let contractMass = record.contractMass;
+            let noncontractMass = record.noncontractMass
+            let contractQty = record.contractQty;
+            let noncontractQty = record.noncontractQty;
+            let contractAmountSpent = record.contractAmountSpent;
+          let noncontractAmountSpent = record.noncontractAmountSpent
+        
+
+var errors = req.validationErrors();
+  
+if (errors) {
+  
+  req.session.errors = errors;
+  req.session.success = false;
+  for(let x=0;x<req.session.errors.length;x++){
+    throw new SyntaxError(req.session.errors[x].msg +" "+"on line"+" "+ num)
+  }
+
+}
+
+
+        
+             /* 
+         
+            const token = jwt.sign({uid,name,surname,address,mobile,gender,fullname,prefix, dob, photo,dept, term, year,companyId, email,role, password,expdate,expStr }, JWT_KEY, { expiresIn: '100000m' });
+            const CLIENT_URL = 'http://' + req.headers.host;
+      
+            const output = `
+            <h2>Please click on below link to activate your account</h2>
+            <a href="${CLIENT_URL}/records/activate/${token}">click here</a>
+            <h1> User credentials</h1>
+            <p>userID:${uid}</p>
+            <p>password:${password}</p>
+            <p><b>NOTE: </b> The above activation link expires in 1 week.</p>
+            `;
+      
+            const transporter = nodemailer.createTransport({
+              service: 'gmail',
+              auth: {
+                  user: "cashreq00@gmail.com",
+                  pass: "itzgkkqtmchvciik",
+              },
+            });
+            
+      
+            // send mail with defined transport object
+            const mailOptions = {
+                from: '"Admin" <cashreq00@gmail.com>', // sender address
+                to: record.email, // list of receivers
+                subject: "Account Verification ✔", // Subject line
+                html: output, // html body
+            };
+      
+         await   transporter.sendMail(mailOptions, (error, info) => {
+                if (error) {
+                  console.log(error)
+                 
+             req.session.message = {
+               type:'errors',
+               message:'confirmation emails not sent'
+             }
+             
+             res.render('imports/teacher', {message:req.session.message,pro:pro}) 
+         
+          
+                }
+                else {
+                    console.log('Mail sent : %s', info.response);
+                    idNumber++
+                 
+                    User.findByIdAndUpdate(id,{$set:{idNumber:idNumber}},function(err,locs){
+
+                    req.session.message = {
+                      type:'success',
+                      message:'confirmation emails sent'
+                    }     
+                    
+                    res.render('imports/teacher', {message:req.session.message,pro:pro}) 
+                  })
+                }
+            })
+              */
+
+
+
+            {
+              Center.findOne({'center':center})
+              .then(user =>{
+                  if(user){ 
+                // req.session.errors = errors
+                  //req.success.user = false;
+            
+            
+            
+                 req.session.message = {
+                   type:'errors',
+                   message:'user id already in use'
+                 }     
+                 
+                    res.render('importCenter', {
+                         message:req.session.message ,pro:pro
+                    }) 
+                
+            }
+            else
+
+
+
+
+
+            var cent = new Center();
+            cent.center = center;
+            cent.region = region;
+            cent.totalQty = totalQty;
+          cent.totalMass = totalMass;
+            cent.totalAmountSpent = totalAmountSpent;
+            cent.contractMass = contractMass;
+            cent.noncontractMass = noncontractMass;
+            cent.contractQty = contractQty
+            cent.noncontractQty = noncontractQty;
+            cent.contractAmountSpent = contractAmountSpent;
+            cent.noncontractAmountSpent = noncontractAmountSpent;
+         
+              
+           
+            cent.save()
+              .then(grow =>{
+               
+              
+                  
+                req.session.message = {
+                  type:'success',
+                  message:'Success'
+                }  
+                res.render('importCenter',{message:req.session.message});
+              })
+
+            })
+          }
+                   
+                    // .catch(err => console.log(err))
+                  }
+                  catch(e){
+                    res.send(e.message)
+                   }
+                    })
+                  
+                  
+         
+                  }
+                  
+                  
+                    
+                    
+        
+                   
+        
+                    
+             
+                }
+      
+        
+  
+  })
+  
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+  
+router.get('/importR',isLoggedIn,function(req,res){
+  var pro = req.user
+  res.render('importRegion',{pro:pro})
+})
+
+
+
+   
+  router.post('/importR',isLoggedIn, upload.single('file'),function(req,res){
+
+    var m = moment()
+    var year = m.format('YYYY')
+
+  
+    
+  /*  if(!req.file){
+        req.session.message = {
+          type:'errors',
+          message:'Select File!'
+        }     
+          res.render('imports/students', {message:req.session.message,pro:pro}) */
+          if (!req.file || req.file.mimetype !== 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'){
+            req.session.message = {
+                type:'errors',
+                message:'Upload Excel File'
+              }     
+                res.render('importRegion', {message:req.session.message,pro:pro
+                     
+                 }) 
+  
+  
+  
+        }
+          
+        else{
+
+        
+            const file = req.file.filename;
+    
+            
+                 var wb =  xlsx.readFile('./public/uploads/' + file)
+         
+                 var sheets = wb.Sheets;
+                 var sheetNames = wb.SheetNames;
+     
+                 var sheetName = wb.SheetNames[0];
+     var sheet = wb.Sheets[sheetName ];
+     
+        for (var i = 0; i < wb.SheetNames.length; ++i) {
+         var sheet = wb.Sheets[wb.SheetNames[i]];
+     
+         console.log(wb.SheetNames.length)
+         var data =xlsx.utils.sheet_to_json(sheet)
+             
+         var newData = data.map(async function (record){
+     
+        
+         
+      
+          
+          try{
+        
+       
+      
+            let prefix = record.prefix;
+            let region1 = record.region1;
+            let totalQty = record.totalQty;
+            let totalMass = record.totalMass
+            let totalAmountSpent = record.totalAmountSpent
+            let contractMass = record.contractMass;
+            let noncontractMass = record.noncontractMass
+            let contractQty = record.contractQty;
+            let noncontractQty = record.noncontractQty;
+            let contractAmountSpent = record.contractAmountSpent;
+          let noncontractAmountSpent = record.noncontractAmountSpent
+        
+
+var errors = req.validationErrors();
+  
+if (errors) {
+  
+  req.session.errors = errors;
+  req.session.success = false;
+  for(let x=0;x<req.session.errors.length;x++){
+    throw new SyntaxError(req.session.errors[x].msg +" "+"on line"+" ")
+  }
+
+}
+
+
+        
+             /* 
+         
+            const token = jwt.sign({uid,name,surname,address,mobile,gender,fullname,prefix, dob, photo,dept, term, year,companyId, email,role, password,expdate,expStr }, JWT_KEY, { expiresIn: '100000m' });
+            const CLIENT_URL = 'http://' + req.headers.host;
+      
+            const output = `
+            <h2>Please click on below link to activate your account</h2>
+            <a href="${CLIENT_URL}/records/activate/${token}">click here</a>
+            <h1> User credentials</h1>
+            <p>userID:${uid}</p>
+            <p>password:${password}</p>
+            <p><b>NOTE: </b> The above activation link expires in 1 week.</p>
+            `;
+      
+            const transporter = nodemailer.createTransport({
+              service: 'gmail',
+              auth: {
+                  user: "cashreq00@gmail.com",
+                  pass: "itzgkkqtmchvciik",
+              },
+            });
+            
+      
+            // send mail with defined transport object
+            const mailOptions = {
+                from: '"Admin" <cashreq00@gmail.com>', // sender address
+                to: record.email, // list of receivers
+                subject: "Account Verification ✔", // Subject line
+                html: output, // html body
+            };
+      
+         await   transporter.sendMail(mailOptions, (error, info) => {
+                if (error) {
+                  console.log(error)
+                 
+             req.session.message = {
+               type:'errors',
+               message:'confirmation emails not sent'
+             }
+             
+             res.render('imports/teacher', {message:req.session.message,pro:pro}) 
+         
+          
+                }
+                else {
+                    console.log('Mail sent : %s', info.response);
+                    idNumber++
+                 
+                    User.findByIdAndUpdate(id,{$set:{idNumber:idNumber}},function(err,locs){
+
+                    req.session.message = {
+                      type:'success',
+                      message:'confirmation emails sent'
+                    }     
+                    
+                    res.render('imports/teacher', {message:req.session.message,pro:pro}) 
+                  })
+                }
+            })
+              */
+
+
+
+            {
+              Region.findOne({'region1':region1})
+              .then(user =>{
+                  if(user){ 
+                // req.session.errors = errors
+                  //req.success.user = false;
+            
+            
+            
+                 req.session.message = {
+                   type:'errors',
+                   message:'user id already in use'
+                 }     
+                 
+                    res.render('importRegion', {
+                         message:req.session.message ,
+                    }) 
+                
+            }
+            else
+
+
+
+
+
+            var cent = new Region();
+            cent.prefix = prefix;
+            cent.region1 = region1;
+            cent.totalQty = totalQty;
+          cent.totalMass = totalMass;
+            cent.totalAmountSpent = totalAmountSpent;
+            cent.contractMass = contractMass;
+            cent.noncontractMass = noncontractMass;
+            cent.contractQty = contractQty
+            cent.noncontractQty = noncontractQty;
+            cent.contractAmountSpent = contractAmountSpent;
+            cent.noncontractAmountSpent = noncontractAmountSpent;
+         
+              
+           
+            cent.save()
+              .then(grow =>{
+               
+              
+                  
+                req.session.message = {
+                  type:'success',
+                  message:'Success'
+                }  
+                res.render('importRegion',{message:req.session.message});
+              })
+
+            })
+          }
+                   
+                    // .catch(err => console.log(err))
+                  }
+                  catch(e){
+                    res.send(e.message)
+                   }
+                    })
+                  
+                  
+         
+                  }
+                  
+                  
+                    
+                    
+        
+                   
+        
+                    
+             
+                }
+      
+        
+  
+  })
+  
 
 
 module.exports = router;
