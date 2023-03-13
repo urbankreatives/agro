@@ -208,7 +208,7 @@ router.post('/addUser', function(req,res){
          
                  user.save()
                    .then(user =>{
-                     const CLIENT_URL = 'http://' + req.headers.host;
+                   /*  const CLIENT_URL = 'http://' + req.headers.host;
      
                      const output = `
                      <h2>Please click on below link to activate your account</h2>
@@ -265,16 +265,17 @@ router.post('/addUser', function(req,res){
                            
                          }
                      
-                
+             
                    
                      
                      
-                     res.redirect('/addUser')
+                     //
                     
                   
-                 })
+                 })*/
+                 res.redirect('/addUser')
 
-               })
+               })   
                }
 
                    })
