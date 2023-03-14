@@ -299,7 +299,7 @@ res.render('text9')
 
 router.post('/txt77',isLoggedIn,function(req,res){
   const accountSid = 'ACdc7e8259a058658c7fa252b15bdf64ff'; 
-const authToken = '62f188ebfa4767ed29ca1671d75e6c71'; 
+const authToken = '21d3f3199018a89beeead1c6bd1d3c7f'; 
 const client = require('twilio')(accountSid, authToken); 
 const alphanumeric_id = "Agrozoid"; 
  
@@ -452,7 +452,7 @@ var newId, newTotal, finalIncome2;
 
 var ntotal =  req.body.total
 const accountSid = 'ACdc7e8259a058658c7fa252b15bdf64ff'; 
-const authToken = '62f188ebfa4767ed29ca1671d75e6c71'; 
+const authToken = '21d3f3199018a89beeead1c6bd1d3c7f'; 
 const client = require('twilio')(accountSid, authToken); 
 const alphanumeric_id = "Agrozoid"; 
 
@@ -2835,7 +2835,7 @@ router.get('/importX',isLoggedIn,function(req,res){
 
    
   router.post('/importX',isLoggedIn, upload.single('file'),function(req,res){
-
+    var pro = req.user
     var m = moment()
     var year = m.format('YYYY')
 
@@ -2933,7 +2933,7 @@ if (errors) {
   req.session.errors = errors;
   req.session.success = false;
   for(let x=0;x<req.session.errors.length;x++){
-    throw new SyntaxError(req.session.errors[x].msg +" "+"on line"+" "+ num)
+    throw new SyntaxError(req.session.errors[x].msg +" "+"on line")
   }
 
 }
@@ -3004,7 +3004,7 @@ if (errors) {
 
 
             {
-              User.findOne({'growerNumber':growerNumber})
+              Grower.findOne({'growerNumber':growerNumber})
               .then(user =>{
                   if(user){ 
                 // req.session.errors = errors
