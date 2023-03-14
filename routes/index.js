@@ -2904,6 +2904,7 @@ router.get('/importX',isLoggedIn,function(req,res){
            let batch = record.batch
            let proceeds = record.proceeds
             let bales = record.bales;
+            let id = record.id
             let type = record.type
             let sales = record.sales
             let fieldOfficer = record.fieldOfficer
@@ -3039,6 +3040,7 @@ if (errors) {
             grow.lotNumber = lotNumber;
             grow.total = total;
             grow.mobile = mobile;
+            grow.id = id
             grow.batch = batch;
             grow.proceeds = proceeds;
             grow.bales = bales;
