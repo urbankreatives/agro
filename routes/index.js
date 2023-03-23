@@ -20,8 +20,8 @@ var Receive = require('../models/receive')
 var Mobile = require('../models/mobile')
 const USB = require("webusb").USB;
 const Center = require('../models/center')
-const accountSid = 'ACacb1e653e4ada35eb9ba8292ae270059'; 
-const authToken = '1aa69aedddd9dca569561258f790e055'; 
+const accountSid = 'ACdc7e8259a058658c7fa252b15bdf64ff'; 
+const authToken = 'a5a9d384f4145f78448235876993fec6'; 
 const client = require('twilio')(accountSid, authToken);
 const alphanumeric_id = "Golden Foods"; 
 var bcrypt = require('bcrypt-nodejs');
@@ -299,7 +299,7 @@ res.render('text9')
 
 router.post('/txt77',isLoggedIn,function(req,res){
   const accountSid = 'ACdc7e8259a058658c7fa252b15bdf64ff'; 
-const authToken = '21d3f3199018a89beeead1c6bd1d3c7f'; 
+const authToken = 'a5a9d384f4145f78448235876993fec6'; 
 const client = require('twilio')(accountSid, authToken); 
 const alphanumeric_id = "Agrozoid"; 
  
@@ -452,7 +452,7 @@ var newId, newTotal, finalIncome2;
 
 var ntotal =  req.body.total
 const accountSid = 'ACdc7e8259a058658c7fa252b15bdf64ff'; 
-const authToken = '21d3f3199018a89beeead1c6bd1d3c7f'; 
+const authToken = 'a5a9d384f4145f78448235876993fec6'; 
 const client = require('twilio')(accountSid, authToken); 
 const alphanumeric_id = "Agrozoid"; 
 
