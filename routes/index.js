@@ -1393,9 +1393,7 @@ res.redirect('/buyNoncontract')
 
 
 
-router.get('/vou',isLoggedIn, function(req,res){
-res.render('bar/scan')
-})
+
 
 
 router.get('/list',isLoggedIn, function(req,res){
@@ -2019,11 +2017,12 @@ Grower2.find({barcodeNumber:barc},function(err,docs){
 
 router.post('/verifyScan',function(req,res){
   
- 
-  Grower2.find(function(err,docs){
+ var barcodeNumber = req.body.code
+  Grower2.find({barcodeNumber:barcodeNumber},function(err,docs){
  if(docs == undefined){
    res.redirect('/verify')
  }else
+ console.log(docs,'docs')
 
     res.send(docs[0])
   })
