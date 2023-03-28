@@ -21,9 +21,9 @@ var Mobile = require('../models/mobile')
 const USB = require("webusb").USB;
 const Center = require('../models/center')
 const accountSid = 'ACdc7e8259a058658c7fa252b15bdf64ff'; 
-const authToken = 'b302d6702fe412b608615152c4886377'; 
+const authToken = '218c8989a3c8a22d6d3613aefa207658'; 
 const client = require('twilio')(accountSid, authToken);
-const alphanumeric_id = "Golden Foods"; 
+const alphanumeric_id = "Agro-Zoid"; 
 var bcrypt = require('bcrypt-nodejs');
 
 
@@ -379,7 +379,7 @@ Grower.findOne({'growerNumber':growerNumber})
       console.log(id)
       Grower.findByIdAndUpdate(id,{$set:{bales:bales}},function(err,loc){
         var uid = req.user._id
-          User.findByIdAndUpdate(uid,{$set:{growerNumber:growerNumber}}, function(rr,coc){
+          User.findByIdAndUpdate(uid,{$set:{growerNumber:growerNumber,center:center,region:region}}, function(err,coc){
           console.log(uid)
           Grower.findByIdAndUpdate(id,{$set:{buyingCenter:center, buyingRegion:region}},function(err,loc){
           
@@ -452,7 +452,7 @@ var newId, newTotal, finalIncome2;
 
 var ntotal =  req.body.total
 const accountSid = 'ACdc7e8259a058658c7fa252b15bdf64ff'; 
-const authToken = 'b302d6702fe412b608615152c4886377'; 
+const authToken = '218c8989a3c8a22d6d3613aefa207658'; 
 const client = require('twilio')(accountSid, authToken); 
 const alphanumeric_id = "Agrozoid"; 
 
